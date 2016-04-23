@@ -79,8 +79,8 @@ public class TemperatureSensor extends Sensor implements Runnable {
 
                 // Get the message queue
                 try {
-                    //queue = evtMgrI.getEventQueue();
-                    evtMgrI.suscribeMsg();
+                    String message = evtMgrI.returnMessage();//returnMessage de rabbitmq
+                    
                 } // try
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);

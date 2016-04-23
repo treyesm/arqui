@@ -31,8 +31,12 @@ import com.rabbitmq.client.*;
  */
 public class RabbitMQInterface {
 
+	private long participantId = -1;			// This processes ID
     private static final String sending = "logs";
     private static String message = "";
+    Channel channel;
+    String queueSensors;
+    String queueMonitor;
     Connection connection;
 
     public RabbitMQInterface() {
@@ -41,15 +45,13 @@ public class RabbitMQInterface {
 
         factory.setHost("localhost");
 
-        /*factory.setUsername("guest");
-        factory.setPassword("guest");
-        factory.setHost ("localhost");
-        factory.setPort(15672);*/
         try {
 
             try {
-
                 connection = factory.newConnection();
+                channel = connection.createChannel();
+                queueSensors = channel.queueDeclare().getQueue();
+                queueMonitor = channel.queueDeclare().getQueue();
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -58,17 +60,16 @@ public class RabbitMQInterface {
         } catch (TimeoutException e) {
             e.printStackTrace();
         }
-
+        
+      
     }
 
     //consumir mensajes
-    public void suscribeMsg() {
-
+    public void suscribeMsg(String queue) {
+        
         try {
-            Channel channel = connection.createChannel();
-
-            String queueSignals = channel.queueDeclare().getQueue();
-            channel.queueBind(queueSignals, sending, "");
+            
+            channel.queueBind(queue, sending, "");
 
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
@@ -81,20 +82,60 @@ public class RabbitMQInterface {
                     System.out.println(" [x] Received '" + message + "'");
                 }
             };
-            channel.basicConsume(queueSignals, true, consumer);
+            channel.basicConsume(queue, true, consumer);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
+    
+    /**
+     * This method allows participants to get their participant Id.
+     *
+     * @return The ID
+     * @throws event.RabbitMQInterface.ParticipantNotRegisteredException
+     */
+    public long getMyId() throws RabbitMQInterface.ParticipantNotRegisteredException {
+        
+        if (participantId != -1) {
+            return participantId;
+        } else {
+            throw new RabbitMQInterface.ParticipantNotRegisteredException("Participant not registered");
+        } // if
+    } // getMyId
+    
+    /**
+     * This method allows participants to obtain the time of registration.
+     *
+     * @return String time stamp in the format: yyyy MM dd::hh:mm:ss:SSS yyyy =
+     * year MM = month dd = day hh = hour mm = minutes ss = seconds SSS =
+     * milliseconds
+     * @throws event.RabbitMQInterface.ParticipantNotRegisteredException
+     */
+    public String getRegistrationTime() throws RabbitMQInterface.ParticipantNotRegisteredException {
+        Calendar TimeStamp = Calendar.getInstance();
+        SimpleDateFormat TimeStampFormat = new SimpleDateFormat("yyyy MM dd::hh:mm:ss:SSS");
+
+        if (participantId != -1) {
+            TimeStamp.setTimeInMillis(participantId);
+            return (TimeStampFormat.format(TimeStamp.getTime()));
+
+        } else {
+
+            throw new RabbitMQInterface.ParticipantNotRegisteredException("Participant not registered");
+
+        } // if
+
+    } // getRegistrationTime
+    
     public String returnMessage(){
         System.out.println(" [*] mensaje"+message);
         return message;
     }
+	
     //publicar mensajes
     public void publishMsg(String message) {
-        //String msg[] = {"Avila", "Burgos", "León", "Palencia", "Salamanca"};
 
         try {
 

@@ -77,7 +77,7 @@ public class HumiditySensor extends Sensor implements Runnable {
                 messageWin.writeMessage("Current Relative Humidity:: " + relativeHumidity + "%");
                 // Get the message queue
                 try {
-                    //queue = evtMgrI.getEventQueue();
+                    String message = evtMgrI.returnMessage();//returnMessage de rabbitmq
                 } 
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
@@ -93,7 +93,7 @@ public class HumiditySensor extends Sensor implements Runnable {
                 
                 try {
                     int qlen = queue.getSize();
-                messageWin.writeMessage("Error getting event queue::" + qlen);
+
                 for (int i = 0; i < qlen; i++) {
                     evt = queue.getEvent();
                     if (evt.getEventId() == HUMIDITY_SENSOR) {

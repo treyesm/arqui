@@ -100,7 +100,7 @@ public class ECSMonitor extends Thread {
             while (!isDone) {
                 // Here we get our event queue from the event manager
                 try {
-                    em.suscribeMsg();
+                    em.suscribeMsg("queueMonitor");
                 } // try
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
@@ -124,7 +124,7 @@ public class ECSMonitor extends Thread {
                     msg_texto = values[0];
                     msg_numero = Integer.parseInt(values[1]); 
                 }
-                
+                messageWin.writeMessage("Mensaje: " + msg_texto + msg_numero);
                     if (msg_numero == 1) { // Temperature reading
                         try {
                             //currentTemperature = Float.valueOf(evt.getMessage()).floatValue();
