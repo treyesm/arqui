@@ -24,6 +24,7 @@ package controllers;
 import common.Component;
 import instrumentation.Indicator;
 import instrumentation.MessageWindow;
+import event.RabbitMQInterface;
 
 public class HumidityController extends Controller implements Runnable {
 
