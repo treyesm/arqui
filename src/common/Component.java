@@ -47,8 +47,7 @@ public class Component {
     public final static String DEHUMIDIFIER_ON = "D1";
     public final static String DEHUMIDIFIER_OFF = "D0";
 
-    //protected Event evt = null;				// Event object
-    protected EventQueue queue = null;			// Message Queue
+    protected EventQueue queue = null;                              // Message Queue
     protected int evtId = 0;			        // User specified event IDs
 
     public RabbitMQInterface evtMgrI = null;

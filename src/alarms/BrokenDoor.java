@@ -40,8 +40,8 @@ public class BrokenDoor extends Sensor implements Runnable {
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
-                //messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
-                //messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
+                messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
+                messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
             } 
             catch (Exception e) {
                 messageWin.writeMessage("Error:: " + e);
@@ -62,7 +62,7 @@ public class BrokenDoor extends Sensor implements Runnable {
                 messageWin.writeMessage("Current Door Status:: " + doorState + "%");
                 // Get the message queue
                 try {
-                    String message = evtMgrI.returnMessage();//returnMessage de rabbitmq
+                    evtMgrI.returnMessage();  //returnMessage de rabbitmq
                 } 
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
@@ -77,41 +77,32 @@ public class BrokenDoor extends Sensor implements Runnable {
                 // output of the humidity as it would in reality.
                 
                 try {
-                    int qlen = queue.getSize();
-
-                for (int i = 0; i < qlen; i++) {
-                    evt = queue.getEvent();
-                    if (evt.getEventId() == DOOR_SENSOR) {
-                        if (evt.getMessage().equalsIgnoreCase(ALARMS_ON)) // humidifier on
+                    
+                    if (evtMgrI.getEventId() == DOOR_SENSOR) {
+                        if (evtMgrI.getMessage().equalsIgnoreCase(ALARMS_ON)) // humidifier on
                         {
                             sensorState = true;
                         } 
 
-                        if (evt.getMessage().equalsIgnoreCase(ALARMS_OFF)) // humidifier off
+                        if (evtMgrI.getMessage().equalsIgnoreCase(ALARMS_OFF)) // humidifier off
                         {
                             sensorState = false;
                         } 
-
                        
                     }
 
                     // If the event ID == 99 then this is a signal that the simulation
                     // is to end. At this point, the loop termination flag is set to
                     // true and this process unregisters from the event manager.
-                    if (evt.getEventId() == END) {
+                    if (evtMgrI.getEventId() == END) {
                         isDone = true;
 
-                        try {
-                            //evtMgrI.unRegister();
-                        }
-                        catch (Exception e) {
-                            messageWin.writeMessage("Error unregistering: " + e);
-                        } 
                         messageWin.writeMessage("\n\nSimulation Stopped. \n");
                     } 
-                } 
+                    
                 } 
                 catch (Exception e) {}
+                
                 if (sensorState) {
                     float semilla = getRandomNumber();
                     if(semilla>0.1){
@@ -176,4 +167,3 @@ public class BrokenDoor extends Sensor implements Runnable {
     }
 
 } 
-
