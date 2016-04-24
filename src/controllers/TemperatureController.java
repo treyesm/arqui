@@ -61,8 +61,8 @@ public class TemperatureController extends Controller implements Runnable {
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
-                //messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
-                //messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
+                messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
+                messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
             }
             catch (Exception e) {
                 System.out.println("Error:: " + e);
@@ -75,7 +75,7 @@ public class TemperatureController extends Controller implements Runnable {
              */
             while (!isDone) {
                 try {
-                    //queue = evtMgrI.getEventQueue();//suscribe
+                    evtMgrI.returnMessage();  //returnMessage de rabbitmq
                 }
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
@@ -90,35 +90,30 @@ public class TemperatureController extends Controller implements Runnable {
                 // output of the temperature as it would in reality.
                 
                 try{
-                    int qlen = queue.getSize();
-                    
-                
 
-                for (int i = 0; i < qlen; i++) {
-                    evt = queue.getEvent();
-                    if (evt.getEventId() == TEMPERATURE_CONTROLLER) {
-                        if (evt.getMessage().equalsIgnoreCase(HEATER_ON)) { // heater on
+                    if (evtMgrI.getEventId() == TEMPERATURE_CONTROLLER) {
+                        if (evtMgrI.getMessage().equalsIgnoreCase(HEATER_ON)) { // heater on
                             heaterState = true;
                             messageWin.writeMessage("Received heater on event");
                             // Confirm that the message was recieved and acted on
                             confirmMessage(evtMgrI, TEMPERATURE_SENSOR, HEATER_ON);
                         }
 
-                        if (evt.getMessage().equalsIgnoreCase(HEATER_OFF)) { // heater off
+                        if (evtMgrI.getMessage().equalsIgnoreCase(HEATER_OFF)) { // heater off
                             heaterState = false;
                             messageWin.writeMessage("Received heater off event");
                             // Confirm that the message was recieved and acted on
                             confirmMessage(evtMgrI, TEMPERATURE_SENSOR, HEATER_OFF);
                         }
 
-                        if (evt.getMessage().equalsIgnoreCase(CHILLER_ON)) { // chiller on
+                        if (evtMgrI.getMessage().equalsIgnoreCase(CHILLER_ON)) { // chiller on
                             chillerState = true;
                             messageWin.writeMessage("Received chiller on event");
                             // Confirm that the message was recieved and acted on
                             confirmMessage(evtMgrI, TEMPERATURE_SENSOR, CHILLER_ON);
                         }
 
-                        if (evt.getMessage().equalsIgnoreCase(CHILLER_OFF)) { // chiller off
+                        if (evtMgrI.getMessage().equalsIgnoreCase(CHILLER_OFF)) { // chiller off
                             chillerState = false;
                             messageWin.writeMessage("Received chiller off event");
                             // Confirm that the message was recieved and acted on
@@ -127,25 +122,18 @@ public class TemperatureController extends Controller implements Runnable {
                         
                     }
                     
-                    
                     // If the event ID == 99 then this is a signal that the simulation
                     // is to end. At this point, the loop termination flag is set to
                     // true and this process unregisters from the event manager.
-                    if (evt.getEventId() == END) {
+                    if (evtMgrI.getEventId() == END) {
                         isDone = true;
-                        try {
-                            //evtMgrI.unRegister();
-                        }
-                        catch (Exception e) {
-                            messageWin.writeMessage("Error unregistering: " + e);
-                        }
+
                         messageWin.writeMessage("\n\nSimulation Stopped. \n");
                         // Get rid of the indicators. The message panel is left for the
                         // user to exit so they can see the last message posted.
                         heatIndicator.dispose();
                         chillIndicator.dispose();
                     }
-                }
                 
                 }catch(NullPointerException e){}
 

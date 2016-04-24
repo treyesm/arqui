@@ -27,7 +27,7 @@ public class Sensor extends Component {
     protected float driftValue;				// The amount of temperature gained or lost
 
     
-    protected Sensor() {evtMgrI.suscribeMsg("queueSensors");}
+    protected Sensor() {evtMgrI.suscribeMsg("queueMonitor", "monitor");}
 
     /**
      * This method provides the simulation with random floating point 
@@ -72,8 +72,7 @@ public class Sensor extends Component {
         String msg=evt.Event1(eventId, String.valueOf(value));
         // Send the event to the event manager.
         try {
-            ei.publishMsg(msg);
-            //ei.sendEvent(evt);
+            ei.publishMsg(msg, "sensors");
         }
         catch (Exception e) {
             System.out.println("Error Posting Temperature:: " + e);

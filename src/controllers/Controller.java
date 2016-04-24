@@ -42,7 +42,7 @@ public class Controller extends Component {
         
         try {
             //ei.sendEvent(evt);
-            ei.publishMsg(msg);
+            ei.publishMsg(msg, "monitor");
         } // try
         catch (Exception e) {
             System.out.println("Error Confirming Message:: " + e);

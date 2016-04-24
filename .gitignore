@@ -1,2 +1,5 @@
 /MuseumEnvironmental/build/
 /MuseumEnvironmental/dist/
+/build/
+/dist/
+/nbproject/private/

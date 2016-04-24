@@ -24,13 +24,11 @@ package controllers;
 import common.Component;
 import instrumentation.Indicator;
 import instrumentation.MessageWindow;
-import event.RabbitMQInterface;
 
 public class HumidityController extends Controller implements Runnable {
 
     private boolean humidifierState = false;	// Heater state: false == off, true == on
     private boolean dehumidifierState = false;	// Dehumidifier state: false == off, true == on
-
     private static HumidityController INSTANCE = new HumidityController();
 
     private HumidityController() {
@@ -61,8 +59,8 @@ public class HumidityController extends Controller implements Runnable {
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
-                //messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
-                //messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
+                messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
+                messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
             }
             catch (Exception e) {
                 System.out.println("Error:: " + e);
@@ -75,7 +73,7 @@ public class HumidityController extends Controller implements Runnable {
              */
             while (!isDone) {
                 try {
-                    //queue = evtMgrI.getEventQueue();
+                    evtMgrI.returnMessage();  //returnMessage de rabbitmq
                 }
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
@@ -88,61 +86,51 @@ public class HumidityController extends Controller implements Runnable {
                 // the assumption is that there should only be a message at most.
                 // If there are more, it is the last message that will effect the
                 // output of the humidity as it would in reality.
-                int qlen = queue.getSize();
 
-                for (int i = 0; i < qlen; i++) {
-                    evt = queue.getEvent();
+                if (evtMgrI.getEventId() == HUMIDITY_CONTROLLER) {
+                    if (evtMgrI.getMessage().equalsIgnoreCase(HUMIDIFIER_ON)) { // humidifier on
+                        humidifierState = true;
+                        messageWin.writeMessage("Received humidifier on event");
 
-                    if (evt.getEventId() == HUMIDITY_CONTROLLER) {
-                        if (evt.getMessage().equalsIgnoreCase(HUMIDIFIER_ON)) { // humidifier on
-                            humidifierState = true;
-                            messageWin.writeMessage("Received humidifier on event");
+                        // Confirm that the message was recieved and acted on
+                        confirmMessage(evtMgrI, HUMIDITY_SENSOR, HUMIDIFIER_ON);
+                    }
+                    if (evtMgrI.getMessage().equalsIgnoreCase(HUMIDIFIER_OFF)) { // humidifier off
+                        humidifierState = false;
+                        messageWin.writeMessage("Received humidifier off event");
 
-                            // Confirm that the message was recieved and acted on
-                            confirmMessage(evtMgrI, HUMIDITY_SENSOR, HUMIDIFIER_ON);
-                        }
-                        if (evt.getMessage().equalsIgnoreCase(HUMIDIFIER_OFF)) { // humidifier off
-                            humidifierState = false;
-                            messageWin.writeMessage("Received humidifier off event");
+                        // Confirm that the message was recieved and acted on
+                        confirmMessage(evtMgrI, HUMIDITY_SENSOR, HUMIDIFIER_OFF);
+                    }
+                    if (evtMgrI.getMessage().equalsIgnoreCase(DEHUMIDIFIER_ON)) { // dehumidifier on
+                        dehumidifierState = true;
+                        messageWin.writeMessage("Received dehumidifier on event");
 
-                            // Confirm that the message was recieved and acted on
-                            confirmMessage(evtMgrI, HUMIDITY_SENSOR, HUMIDIFIER_OFF);
-                        }
-                        if (evt.getMessage().equalsIgnoreCase(DEHUMIDIFIER_ON)) { // dehumidifier on
-                            dehumidifierState = true;
-                            messageWin.writeMessage("Received dehumidifier on event");
-
-                            // Confirm that the message was recieved and acted on
-                            confirmMessage(evtMgrI, HUMIDITY_SENSOR, DEHUMIDIFIER_ON);
-                        }
-
-                        if (evt.getMessage().equalsIgnoreCase(DEHUMIDIFIER_OFF)) { // dehumidifier off
-                            dehumidifierState = false;
-                            messageWin.writeMessage("Received dehumidifier off event");
-
-                            // Confirm that the message was recieved and acted on
-                            confirmMessage(evtMgrI, HUMIDITY_SENSOR, DEHUMIDIFIER_OFF);
-                        }
+                        // Confirm that the message was recieved and acted on
+                        confirmMessage(evtMgrI, HUMIDITY_SENSOR, DEHUMIDIFIER_ON);
                     }
 
-                    // If the event ID == 99 then this is a signal that the simulation
-                    // is to end. At this point, the loop termination flag is set to
-                    // true and this process unregisters from the event manager.
-                    if (evt.getEventId() == END) {
-                        isDone = true;
-                        try {
-                            //evtMgrI.unRegister();
-                        }
-                        catch (Exception e) {
-                            messageWin.writeMessage("Error unregistering: " + e);
-                        }
-                        messageWin.writeMessage("\n\nSimulation Stopped. \n");
+                    if (evtMgrI.getMessage().equalsIgnoreCase(DEHUMIDIFIER_OFF)) { // dehumidifier off
+                        dehumidifierState = false;
+                        messageWin.writeMessage("Received dehumidifier off event");
 
-                        // Get rid of the indicators. The message panel is left for the
-                        // user to exit so they can see the last message posted.
-                        humIndicator.dispose();
-                        dehumIndicator.dispose();
+                        // Confirm that the message was recieved and acted on
+                        confirmMessage(evtMgrI, HUMIDITY_SENSOR, DEHUMIDIFIER_OFF);
                     }
+                }
+
+                // If the event ID == 99 then this is a signal that the simulation
+                // is to end. At this point, the loop termination flag is set to
+                // true and this process unregisters from the event manager.
+                if (evtMgrI.getEventId() == END) {
+                    isDone = true;
+                    
+                    messageWin.writeMessage("\n\nSimulation Stopped. \n");
+
+                    // Get rid of the indicators. The message panel is left for the
+                    // user to exit so they can see the last message posted.
+                    humIndicator.dispose();
+                    dehumIndicator.dispose();
                 }
 
                 // Update the lamp status

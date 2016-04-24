@@ -100,7 +100,7 @@ public class ECSMonitor extends Thread {
             while (!isDone) {
                 // Here we get our event queue from the event manager
                 try {
-                    em.suscribeMsg("queueMonitor");
+                    em.suscribeMsg("queueSensors", "sensors");
                 } // try
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
@@ -254,7 +254,7 @@ public class ECSMonitor extends Thread {
         } // if
         // Here we send the event to the event manager.
         try {
-            em.publishMsg(message);
+            em.publishMsg(message, "monitor");
         } // try
         catch (Exception e) {
             System.out.println("Error sending heater control message:: " + e);
@@ -282,7 +282,7 @@ public class ECSMonitor extends Thread {
         } // if
         // Here we send the event to the event manager.
         try {
-            em.publishMsg(message);
+            em.publishMsg(message, "queueMonitor");
         } // try
         catch (Exception e) {
             System.out.println("Error sending chiller control message:: " + e);
@@ -310,7 +310,7 @@ public class ECSMonitor extends Thread {
         } // if
         // Here we send the event to the event manager.
         try {
-            em.publishMsg(message);
+            em.publishMsg(message, "queueMonitor");
         } // try
         catch (Exception e) {
             System.out.println("Error sending humidifier control message::  " + e);
@@ -338,7 +338,7 @@ public class ECSMonitor extends Thread {
         } // if
         // Here we send the event to the event manager.
         try {
-            em.publishMsg(message);
+            em.publishMsg(message, "queueMonitor");
         } // try
         catch (Exception e) {
             System.out.println("Error sending dehumidifier control message::  " + e);

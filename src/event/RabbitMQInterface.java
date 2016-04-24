@@ -18,7 +18,6 @@
 package event;
 
 import java.io.IOException;
-
 import java.util.concurrent.TimeoutException;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
@@ -74,34 +73,7 @@ public class RabbitMQInterface {
         } catch (TimeoutException e) {
             e.printStackTrace();
         }
-        
       
-    }
-
-    //consumir mensajes
-    public void suscribeMsg(String queue) {
-        
-        try {
-            
-            channel.queueBind(queue, sending, "");
-
-            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
-
-            Consumer consumer = new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope,
-                        AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    message = new String(body, "UTF-8");
-
-                    System.out.println(" [x] Received '" + message + "'");
-                }
-            };
-            channel.basicConsume(queue, true, consumer);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
     
     /**
@@ -117,6 +89,7 @@ public class RabbitMQInterface {
         } else {
             throw new RabbitMQInterface.ParticipantNotRegisteredException("Participant not registered");
         } // if
+        
     } // getMyId
     
     /**
@@ -128,11 +101,14 @@ public class RabbitMQInterface {
      * @throws event.RabbitMQInterface.ParticipantNotRegisteredException
      */
     public String getRegistrationTime() throws RabbitMQInterface.ParticipantNotRegisteredException {
+        
         Calendar TimeStamp = Calendar.getInstance();
         SimpleDateFormat TimeStampFormat = new SimpleDateFormat("yyyy MM dd::hh:mm:ss:SSS");
 
         if (participantId != -1) {
+            
             TimeStamp.setTimeInMillis(participantId);
+            
             return (TimeStampFormat.format(TimeStamp.getTime()));
 
         } else {
@@ -142,27 +118,85 @@ public class RabbitMQInterface {
         } // if
 
     } // getRegistrationTime
+
+    //consumir mensajes
+    public void suscribeMsg(String queue, String severity) {
+        
+        try {
+
+            channel.exchangeDeclare(sending, "direct");
+            channel.queueBind(queue, sending, severity);
+
+            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
+
+            Consumer consumer = new DefaultConsumer(channel) {
+                @Override
+                public void handleDelivery(String consumerTag, Envelope envelope,
+                        AMQP.BasicProperties properties, byte[] body) throws IOException {
+                    message = new String(body, "UTF-8");
+
+                    System.out.println(" [x] Received '" + message + "'");
+                }
+            };
+            
+            channel.basicConsume(queue, true, consumer);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
     
     public String returnMessage(){
         System.out.println(" [*] mensaje"+message);
         return message;
     }
-	
+    
     //publicar mensajes
-    public void publishMsg(String message) {
+    public void publishMsg(String message, String severity) {
 
         try {
-
-            Channel channel = connection.createChannel();
-            channel.exchangeDeclare(sending, "fanout");
-            channel.basicPublish(sending, "", null, message.getBytes("UTF-8"));
+            
+            channel.exchangeDeclare(sending, "direct");
+            channel.basicPublish(sending, severity, null, message.getBytes("UTF-8"));
             System.out.println(" [x] Sent '" + message + "'");
 
         } catch (IOException e) {
             e.printStackTrace();
-            }
+        }
     }
     
+    /**
+     * This method returns the ID of the participant that posted this Event.
+     *
+     * @return long integer
+     */
+    public int getEventId() {
+        String []values = this.message.split("&");
+        
+       if (values.length == 2)
+           try {
+               return Integer.parseInt(values[1]);
+           } catch (NumberFormatException e) {
+               return -1;
+           }
+       
+       return -1;
+    } // getEventId
+    
+    /**
+     * This method returns the message (if there is one) of the posted event.
+     * There is not semantic imposed on event IDs.
+     *
+     * @return The message contained in this event
+     */
+    public String getMessage() {
+       String []values = this.message.split("&");
+        
+       if (values.length == 2)
+          return values[0];
+        
+        return "";
+    } // getMenssage
+    
 }
-   
-
