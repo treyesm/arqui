@@ -24,6 +24,7 @@ public class Component {
 
     public final static int TEMPERATURE = 1;
     public final static int HUMIDITY = 2;
+    public final static int DOOR = 6;
 
     public final static int TEMPERATURE_SENSOR = -5;
     public final static int HUMIDITY_SENSOR = -4;
@@ -31,10 +32,15 @@ public class Component {
     public final static int HUMIDITY_CONTROLLER = 4;
     public final static int END = 99;
 
+    public final static int DOOR_SENSOR = -7;    
+    public final static int DOOR_CONTROLLER = 7;    
+    
     public final static String HEATER_ON = "H1";
     public final static String HEATER_OFF = "H0";
     public final static String CHILLER_ON = "C1";
     public final static String CHILLER_OFF = "C0";
+    public final static String ALARMS_ON = "A1";
+    public final static String ALARMS_OFF = "A0";
 
     public final static String HUMIDIFIER_ON = "H1";
     public final static String HUMIDIFIER_OFF = "H0";
