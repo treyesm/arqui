@@ -36,7 +36,7 @@ public class MuseumEnviromental {
         
         
         RabbitMQInterface conn= new RabbitMQInterface();
-        conn.suscribeMsg();
+        //    conn.suscribeMsg("");
         
         try {
             Thread.sleep(3000);
