@@ -24,6 +24,8 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.*;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 /**
  *
@@ -31,13 +33,25 @@ import com.rabbitmq.client.*;
  */
 public class RabbitMQInterface {
 
-	private long participantId = -1;			// This processes ID
+    private long participantId = -1;			// This processes ID
     private static final String sending = "logs";
     private static String message = "";
     Channel channel;
     String queueSensors;
     String queueMonitor;
     Connection connection;
+    
+    class ParticipantNotRegisteredException extends Exception {
+
+        ParticipantNotRegisteredException() {
+            super();
+        }
+
+        ParticipantNotRegisteredException(String s) {
+            super(s);
+        }
+
+    } // Exception
 
     public RabbitMQInterface() {
 
