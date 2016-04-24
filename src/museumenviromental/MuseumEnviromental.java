@@ -5,8 +5,8 @@
  */
 package museumenviromental;
 
-import event.RabbitMQInterface;
-import java.util.Timer;
+//import event.RabbitMQInterface;
+
 /**
  *
  * @author paco
@@ -29,27 +29,21 @@ public class MuseumEnviromental {
         int ev=0;
         String num =msg.substring(0, 1);
         ev=Integer.parseInt(num);
-        System.out.println(" num= " + num.toString() );
+        System.out.println(" num= " + num );
         
         String text= msg.substring(2, msg.length());
-        System.out.println(" text= " + text.toString() );
+        System.out.println(" text= " + text );
         
-        
-        RabbitMQInterface conn= new RabbitMQInterface();
+        //RabbitMQInterface conn= new RabbitMQInterface();
         //    conn.suscribeMsg("");
         
-        try {
-            Thread.sleep(3000);
-            } catch (InterruptedException ie) {
+        //try {
+            //Thread.sleep(3000);
+        //} catch (InterruptedException ie) {
             //Handle exception
-            }
+        //}
         
         //conn.publishMsg();
-        
-        
-        
-        
-        
     }
     
 }
