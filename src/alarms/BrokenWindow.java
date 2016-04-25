@@ -15,12 +15,12 @@ import sensors.Sensor;
  */
 public class BrokenWindow extends Sensor implements Runnable {
 
-    private int doorState = 0;	// Humidifier state: false == off, true == on
+    private int windowState = 0;	// window state: 0 == close, 1 == open
     private boolean sensorState = true;
-   
+
     private static BrokenWindow INSTANCE = new BrokenWindow();
-    
-    private BrokenWindow(){
+
+    private BrokenWindow() {
     }
 
     @Override
@@ -36,20 +36,18 @@ public class BrokenWindow extends Sensor implements Runnable {
             float winPosY = 0.60f;	//This is the Y position of the message window in terms 
             //of a percentage of the screen height 
 
-            MessageWindow messageWin = new MessageWindow("Door Sensor", winPosX, winPosY);
+            MessageWindow messageWin = new MessageWindow("Window Sensor", winPosX, winPosY);
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
                 messageWin.writeMessage("   Participant id: " + evtMgrI.getMyId());
                 messageWin.writeMessage("   Registration Time: " + evtMgrI.getRegistrationTime());
-            } 
-            catch (Exception e) {
+            } catch (Exception e) {
                 messageWin.writeMessage("Error:: " + e);
-            } 
+            }
 
-            messageWin.writeMessage("\nMostrando estatus de la puerta::");
-            
-            
+            messageWin.writeMessage("\nWindow status::");
+
             /**
              * ******************************************************************
              ** Here we start the main simulation loop
@@ -57,38 +55,23 @@ public class BrokenWindow extends Sensor implements Runnable {
              */
             messageWin.writeMessage("Beginning Simulation... ");
             while (!isDone) {
-                // Post the current relative humidity
-                postEvent(evtMgrI, DOOR, doorState);
-                messageWin.writeMessage("Current Door Status:: " + doorState + "%");
+
                 // Get the message queue
                 try {
-                    evtMgrI.returnMessage();    //returnMessage de rabbitmq
-                } 
-                catch (Exception e) {
+                    evtMgrI.returnMessage();  //returnMessage de rabbitmq
+                } catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
-                } 
+                }
 
-                // If there are messages in the queue, we read through them.
-                // We are looking for EventIDs = -4, this means the the humidify or
-                // dehumidifier has been turned on/off. Note that we get all the messages
-                // from the queue at once... there is a 2.5 second delay between samples,..
-                // so the assumption is that there should only be a message at most.
-                // If there are more, it is the last message that will effect the
-                // output of the humidity as it would in reality.
-                
                 try {
-                    
-                    if (evtMgrI.getEventId() == DOOR_SENSOR) {
-                        if (evtMgrI.getMessage().equalsIgnoreCase(ALARMS_ON)) // humidifier on
-                        {
-                            sensorState = true;
-                        } 
 
-                        if (evtMgrI.getMessage().equalsIgnoreCase(ALARMS_OFF)) // humidifier off
-                        {
-                            sensorState = false;
-                        } 
-
+                    if (evtMgrI.getEventId() == START) {
+                        sensorState = true;
+                        messageWin.writeMessage("\n\nSimulation start. \n");
+                    }
+                    if (evtMgrI.getEventId() == STOP) {
+                        sensorState = false;
+                        messageWin.writeMessage("\n\nSimulation stop. \n");
                     }
 
                     // If the event ID == 99 then this is a signal that the simulation
@@ -98,40 +81,46 @@ public class BrokenWindow extends Sensor implements Runnable {
                         isDone = true;
 
                         messageWin.writeMessage("\n\nSimulation Stopped. \n");
-                    } 
-                } 
-                catch (Exception e) {}
-                if (sensorState) {
-                    float semilla = getRandomNumber();
-                    if(semilla>0.1){
-                        doorState = 0;
-                    }else{
-                        doorState = 1;
                     }
-                } // if humidifier is on
-                // Now we trend the relative humidity according to the status of the
-                // humidifier/dehumidifier controller.
-                if (doorState == 1) {
-                     messageWin.writeMessage("Puerta abierta, suena alarma");
-                } // if humidifier is on
 
-                // Here we wait for a 2.5 seconds before we start the next sample
+                } catch (Exception e) {
+                }
+
                 try {
                     Thread.sleep(delay);
-                }
-                catch (Exception e) {
+
+                    if (sensorState == true) {
+                        if (windowState == 0) {
+                            messageWin.writeMessage("Current Window Status:: Close");
+                        } else {
+                            messageWin.writeMessage("Current Window Status:: OPEN");
+                        }
+                        float semilla = getRandomNumber();
+
+                        if (semilla > 0.2) {
+                            windowState = 0;
+                        } else {
+                            windowState = 1;
+                        }
+                        if (windowState == 1) {
+                            messageWin.writeMessage("Window opend, send alarm");
+                        }
+
+                        postEvent(evtMgrI, WINDOW, windowState);
+                    }
+                } catch (Exception e) {
                     messageWin.writeMessage("Sleep error:: " + e);
-                } 
-            } 
-        }
-        else {
+                }
+
+            }
+        } else {
             System.out.println("Unable to register with the event manager.\n\n");
-        } 
+        }
     }
-    
+
     private static void createInstance() {
         if (INSTANCE == null) {
-            synchronized (BrokenDoor.class) {
+            synchronized (BrokenWindow.class) {
                 if (INSTANCE == null) {
                     INSTANCE = new BrokenWindow();
                 }
@@ -140,9 +129,9 @@ public class BrokenWindow extends Sensor implements Runnable {
     }
 
     /**
-     * This method calls createInstance method to creates and ensure that 
-     * only one instance of this class is created. Singleton design pattern.
-     * 
+     * This method calls createInstance method to creates and ensure that only
+     * one instance of this class is created. Singleton design pattern.
+     *
      * @return The instance of this class.
      */
     public static BrokenWindow getInstance() {
@@ -154,9 +143,9 @@ public class BrokenWindow extends Sensor implements Runnable {
 
     /**
      * Start this sensor
-     * 
-     * @paramargs IP address of the event manager (on command line). 
-     * If blank, it is assumed thast the event manager is on the local machine.
+     *
+     * @paramargs IP address of the event manager (on command line). If blank,
+     * it is assumed thast the event manager is on the local machine.
      */
     public static void main(String args[]) {
         Component.SERVER_IP = "localhost";
@@ -164,4 +153,4 @@ public class BrokenWindow extends Sensor implements Runnable {
         sensor.run();
     }
 
-} 
+}

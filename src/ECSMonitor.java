@@ -19,6 +19,7 @@ import common.Component;
 import instrumentation.*;
 import event.*;
 
+
 public class ECSMonitor extends Thread {
 
     private RabbitMQInterface em = null;            // Interface object to the event manager
@@ -124,7 +125,7 @@ public class ECSMonitor extends Thread {
                     msg_texto = values[0];
                     msg_numero = Integer.parseInt(values[1]); 
                 }
-                messageWin.writeMessage("Mensaje: " + msg_texto + msg_numero);
+                
                     if (msg_numero == 1) { // Temperature reading
                         try {
                             //currentTemperature = Float.valueOf(evt.getMessage()).floatValue();
@@ -221,15 +222,17 @@ public class ECSMonitor extends Thread {
      */
     public void halt() {
         messageWin.writeMessage("***HALT MESSAGE RECEIVED - SHUTTING DOWN SYSTEM***");
-        // Here we create the stop event.
+        String message = "";
         Event evt;
-        //evt = new Event(Component.END, "XXX");
-        // Here we send the event to the event manager.
+        
+        evt = new Event(Component.END);
+        message = evt.Event1(Component.END,String.valueOf(Component.END));
+        
         try {
-            //em.sendEvent(evt);
-        }
+            em.publishMsg(message, "monitor");
+        } // try
         catch (Exception e) {
-            System.out.println("Error sending halt message:: " + e);
+            System.out.println("Error sending chiller control message:: " + e);
         }
     } // halt
 

@@ -125,9 +125,9 @@ public class RabbitMQInterface {
         try {
 
             channel.exchangeDeclare(sending, "direct");
+           
             channel.queueBind(queue, sending, severity);
-
-            System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
+           
 
             Consumer consumer = new DefaultConsumer(channel) {
                 @Override
@@ -135,7 +135,6 @@ public class RabbitMQInterface {
                         AMQP.BasicProperties properties, byte[] body) throws IOException {
                     message = new String(body, "UTF-8");
 
-                    System.out.println(" [x] Received '" + message + "'");
                 }
             };
             
@@ -148,7 +147,7 @@ public class RabbitMQInterface {
     }
     
     public String returnMessage(){
-        System.out.println(" [*] mensaje"+message);
+        
         return message;
     }
     
@@ -173,8 +172,8 @@ public class RabbitMQInterface {
      */
     public int getEventId() {
         String []values = this.message.split("&");
-        
        if (values.length == 2)
+           
            try {
                return Integer.parseInt(values[1]);
            } catch (NumberFormatException e) {

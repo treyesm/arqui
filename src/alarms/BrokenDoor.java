@@ -15,7 +15,7 @@ import sensors.Sensor;
 
 public class BrokenDoor extends Sensor implements Runnable {
 
-    private int doorState = 0;	// Humidifier state: false == off, true == on
+    private int doorState = 0;	// door state: 0 == close, 1 == open
     private boolean sensorState = true;
    
     private static BrokenDoor INSTANCE = new BrokenDoor();
@@ -47,7 +47,7 @@ public class BrokenDoor extends Sensor implements Runnable {
                 messageWin.writeMessage("Error:: " + e);
             } 
 
-            messageWin.writeMessage("\nMostrando estatus de la puerta::");
+            messageWin.writeMessage("\nDoor status::");
             
             
             /**
@@ -57,9 +57,7 @@ public class BrokenDoor extends Sensor implements Runnable {
              */
             messageWin.writeMessage("Beginning Simulation... ");
             while (!isDone) {
-                // Post the current relative humidity
-                postEvent(evtMgrI, DOOR, doorState);
-                messageWin.writeMessage("Current Door Status:: " + doorState + "%");
+  
                 // Get the message queue
                 try {
                     evtMgrI.returnMessage();  //returnMessage de rabbitmq
@@ -68,28 +66,17 @@ public class BrokenDoor extends Sensor implements Runnable {
                     messageWin.writeMessage("Error getting event queue::" + e);
                 } 
 
-                // If there are messages in the queue, we read through them.
-                // We are looking for EventIDs = -4, this means the the humidify or
-                // dehumidifier has been turned on/off. Note that we get all the messages
-                // from the queue at once... there is a 2.5 second delay between samples,..
-                // so the assumption is that there should only be a message at most.
-                // If there are more, it is the last message that will effect the
-                // output of the humidity as it would in reality.
-                
                 try {
                     
-                    if (evtMgrI.getEventId() == DOOR_SENSOR) {
-                        if (evtMgrI.getMessage().equalsIgnoreCase(ALARMS_ON)) // humidifier on
-                        {
-                            sensorState = true;
-                        } 
-
-                        if (evtMgrI.getMessage().equalsIgnoreCase(ALARMS_OFF)) // humidifier off
-                        {
-                            sensorState = false;
-                        } 
-                       
+                    if (evtMgrI.getEventId() == START) {
+                        sensorState = true;          
+                         messageWin.writeMessage("\n\nSimulation inicia. \n");
                     }
+                    if (evtMgrI.getEventId() == STOP) 
+                    {
+                        sensorState = false;
+                         messageWin.writeMessage("\n\nSimulation detiene. \n");
+                    } 
 
                     // If the event ID == 99 then this is a signal that the simulation
                     // is to end. At this point, the loop termination flag is set to
@@ -103,27 +90,32 @@ public class BrokenDoor extends Sensor implements Runnable {
                 } 
                 catch (Exception e) {}
                 
-                if (sensorState) {
-                    float semilla = getRandomNumber();
-                    if(semilla>0.1){
-                        doorState = 0;
-                    }else{
-                        doorState = 1;
-                    }
-                } // if humidifier is on
-                // Now we trend the relative humidity according to the status of the
-                // humidifier/dehumidifier controller.
-                if (doorState == 1) {
-                     messageWin.writeMessage("Puerta abierta, suena alarma");
-                } // if humidifier is on
+                   try {
+                       Thread.sleep(delay);
+                        
+                       if (sensorState == true) {
+                            if (doorState == 0)
+                                messageWin.writeMessage("Current Door Status:: Close");
+                            else
+                                messageWin.writeMessage("Current Door Status:: OPEN");
+                            float semilla = getRandomNumber();
 
-                // Here we wait for a 2.5 seconds before we start the next sample
-                try {
-                    Thread.sleep(delay);
-                }
-                catch (Exception e) {
-                    messageWin.writeMessage("Sleep error:: " + e);
-                } 
+                            if(semilla>0.2){
+                                doorState = 0;
+                            }else{
+                                doorState = 1;
+                            }
+                            if (doorState == 1) {
+                                messageWin.writeMessage("Door opend, send alarm");
+                            }
+
+                            postEvent(evtMgrI, DOOR, doorState);
+                       }
+                   }
+                   catch (Exception e) {
+                       messageWin.writeMessage("Sleep error:: " + e);
+                   } 
+                
             } 
         }
         else {
