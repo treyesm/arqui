@@ -1,5 +1,6 @@
 /MuseumEnvironmental/build/
 /MuseumEnvironmental/dist/
+<<<<<<< Updated upstream
 /build/
 /dist/
 /nbproject/private/
@@ -11,3 +12,6 @@
 /build.xml
 /src/*.bat
 /src/*.sh
+=======
+/build/
+>>>>>>> Stashed changes
