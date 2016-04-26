@@ -72,10 +72,10 @@ public class EASMonitor extends Thread {
             // This panel is placed in the upper left hand corner and the status 
             // indicators are placed directly to the right, one on top of the other
 
-            messageWin = new MessageWindow("EAS Monitoring Console", 0, 0);
-            windowIndicator = new Indicator("WINDOW UNK", messageWin.getX() + messageWin.width(), 0, 0);
-            doorIndicator = new Indicator("DOOR UNK", messageWin.getX() + messageWin.width(), 0, 0);
-            intruderIndicator = new Indicator("INTRUDER UNK", messageWin.getX() + messageWin.width(), 0, 0);
+            messageWin = new MessageWindow("EAS Monitoring Console", 0, 1);
+            windowIndicator = new Indicator("WINDOW CLOSED", messageWin.getX() + messageWin.width(), 0, 1);
+            doorIndicator = new Indicator("DOOR CLOSED", messageWin.getX() + messageWin.width(), (int) (messageWin.height() / 2), 1);
+            intruderIndicator = new Indicator("MOTION NONE", messageWin.getX() + messageWin.width(), messageWin.height(), 1);
 
             messageWin.writeMessage("Registered with the event manager.");
 
@@ -107,7 +107,9 @@ public class EASMonitor extends Thread {
                 if (msg_numero == common.Component.DOOR) { 
                     try {
                         currentDoorStatus = msg_texto;
-                       
+                        if("1.0".equals(currentDoorStatus)){
+                            doorIndicator.setLampColorAndMessage("DOOR OPENED!!!!", 3);
+                        }
                    } // try
                    catch (Exception e) {
                         messageWin.writeMessage("Error reading door status: " + msg_texto);
@@ -117,7 +119,9 @@ public class EASMonitor extends Thread {
                if (msg_numero == common.Component.WINDOW) { // Humidity reading
                     try {
                         currentWindowStatus = msg_texto;
-                       
+                        if("1.0".equals(currentWindowStatus)){
+                            windowIndicator.setLampColorAndMessage("WINDOW OPENED!!!!", 3);
+                        }
                     } // try
                         catch (Exception e) {
                         messageWin.writeMessage("Error reading window status: " + e);
@@ -127,6 +131,9 @@ public class EASMonitor extends Thread {
                 if (msg_numero == common.Component.MOTION) { // Humidity reading
                     try {
                         currentMotionStatus = msg_texto;
+                        if("1.0".equals(currentMotionStatus)){
+                            intruderIndicator.setLampColorAndMessage("MOTION DETECTED!!!!", 3);
+                        }
                     } // try
                         catch (Exception e) {
                         messageWin.writeMessage("Error reading motion sensor status: " + e);
@@ -185,7 +192,9 @@ public class EASMonitor extends Thread {
         
         evt = new Event(Component.START);
         message = evt.Event1(Component.START,String.valueOf(Component.START));
-        
+        doorIndicator.setLampColorAndMessage("DOOR CLOSED", 1);
+        windowIndicator.setLampColorAndMessage("WINDOW CLOSED", 1);
+        intruderIndicator.setLampColorAndMessage("MOTION NONE", 1);
         try {
             em.publishMsg(message, "monitor");
         } // try

@@ -71,18 +71,18 @@ public class EASConsole {
                     // become dead queues and they collect events and will eventually
                     // cause problems for the event manager.
 
-                    isDone = true;
+                    
                     System.out.println("\nConsole Stopped... Exit monitor mindow to return to command prompt.");
                     monitor.stopSensors();
-                    option = userInput.keyboardReadString();
+                    
                 } // if
                 //////////// option X ////////////
                 if (option.equalsIgnoreCase("S")) {
                     monitor.startSensors();
-                    isDone = true;
+                    
                     System.out.println("\nConsole Stopped... Exit monitor mindow to return to command prompt.");
                     monitor.startSensors();
-                    option = userInput.keyboardReadString();
+                   
                 } // if
             } // while
         }
