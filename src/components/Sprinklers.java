@@ -3,24 +3,23 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package alarms;
+package components;
+
+import common.Component;
+import instrumentation.MessageWindow;
+import sensors.Sensor;
 
 /**
  *
  * @author tania
  */
-import common.Component;
-import instrumentation.MessageWindow;
-import sensors.Sensor;
+public class Sprinklers extends Sensor implements Runnable {
 
-public class BrokenDoor extends Sensor implements Runnable {
+    private int waterStatus = 0;	// door state: 0 == close, 1 == open
 
-    private int doorState = 0;	// door state: 0 == close, 1 == open
-    private boolean sensorState = true;
+    private static Sprinklers INSTANCE = new Sprinklers();
 
-    private static BrokenDoor INSTANCE = new BrokenDoor();
-
-    private BrokenDoor() {
+    private Sprinklers() {
     }
 
     @Override
@@ -36,7 +35,7 @@ public class BrokenDoor extends Sensor implements Runnable {
             float winPosY = 0.60f;	//This is the Y position of the message window in terms 
             //of a percentage of the screen height 
 
-            MessageWindow messageWin = new MessageWindow("Door Sensor", winPosX, winPosY);
+            MessageWindow messageWin = new MessageWindow("Sprinkler status", winPosX, winPosY);
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
@@ -46,14 +45,14 @@ public class BrokenDoor extends Sensor implements Runnable {
                 messageWin.writeMessage("Error:: " + e);
             }
 
-            messageWin.writeMessage("\nDoor status::");
+            messageWin.writeMessage("\nWater status::");
 
             /**
              * ******************************************************************
              ** Here we start the main simulation loop
              * *******************************************************************
              */
-            messageWin.writeMessage("Beginning Simulation... ");
+           
             while (!isDone) {
 
                 // Get the message queue
@@ -65,23 +64,15 @@ public class BrokenDoor extends Sensor implements Runnable {
 
                 try {
 
-                    if (evtMgrI.getEventId() == START) {
-                        sensorState = true;
-                        messageWin.writeMessage("\n\nSimulation start. \n");
+                    if (evtMgrI.getEventId() == STARTSPRINKLER) {
+                        waterStatus = 1;
+                        messageWin.writeMessage("\n\nWater flow initiated. \n");
                     }
-                    if (evtMgrI.getEventId() == STOP) {
-                        sensorState = false;
-                        messageWin.writeMessage("\n\nSimulation stop. \n");
+                    if (evtMgrI.getEventId() == STOPSPRINKLER) {
+                        waterStatus = 0;
+                        messageWin.writeMessage("\n\nWater flow stopped. \n");
                     }
 
-                    // If the event ID == 99 then this is a signal that the simulation
-                    // is to end. At this point, the loop termination flag is set to
-                    // true and this process unregisters from the event manager.
-                    if (evtMgrI.getEventId() == END) {
-                        isDone = true;
-
-                        messageWin.writeMessage("\n\nSimulation Stopped. \n");
-                    }
 
                 } catch (Exception e) {
                 }
@@ -89,25 +80,12 @@ public class BrokenDoor extends Sensor implements Runnable {
                 try {
                     Thread.sleep(delay);
 
-                    if (sensorState == true) {
-                        if (doorState == 0) {
-                            messageWin.writeMessage("Current Door Status:: Close");
-                        } else {
-                            messageWin.writeMessage("Current Door Status:: OPEN");
-                        }
-                        float semilla = getRandomNumber();
-
-                        if (semilla > 0.2) {
-                            doorState = 0;
-                        } else {
-                            doorState = 1;
-                        }
-                        if (doorState == 1) {
-                            messageWin.writeMessage("Door opend, send alarm");
-                        }
-
-                        postEvent(evtMgrI, DOOR, doorState);
+                    if (waterStatus == 0) {
+                        messageWin.writeMessage("Current Museum Status:: ok");
+                    } else {
+                        messageWin.writeMessage("Current Museum Status:: FIRE DETECTED!!!");
                     }
+                       
                 } catch (Exception e) {
                     messageWin.writeMessage("Sleep error:: " + e);
                 }
@@ -120,9 +98,9 @@ public class BrokenDoor extends Sensor implements Runnable {
 
     private static void createInstance() {
         if (INSTANCE == null) {
-            synchronized (BrokenDoor.class) {
+            synchronized (Sprinklers.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new BrokenDoor();
+                    INSTANCE = new Sprinklers();
                 }
             }
         }
@@ -134,7 +112,7 @@ public class BrokenDoor extends Sensor implements Runnable {
      *
      * @return The instance of this class.
      */
-    public static BrokenDoor getInstance() {
+    public static Sprinklers getInstance() {
         if (INSTANCE == null) {
             createInstance();
         }
@@ -149,7 +127,7 @@ public class BrokenDoor extends Sensor implements Runnable {
      */
     public static void main(String args[]) {
         Component.SERVER_IP = "localhost";
-        BrokenDoor sensor = BrokenDoor.getInstance();
+        Sprinklers sensor = Sprinklers.getInstance();
         sensor.run();
     }
 

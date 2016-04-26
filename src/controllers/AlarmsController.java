@@ -18,8 +18,15 @@ import instrumentation.MessageWindow;
  */
 public class AlarmsController extends Controller implements Runnable {
 
-    private boolean humidifierState = false;	// Heater state: false == off, true == on
-    private boolean dehumidifierState = false;	// Dehumidifier state: false == off, true == on
+    Indicator doorIndicator;				
+    Indicator windowIndicator;				
+    Indicator intruderIndicator;
+    Indicator fireIndicator;
+    int doorState = 0;
+    int windowState = 0;
+    int motionState = 0;
+    int fireState = 0;
+    
     private static AlarmsController INSTANCE = new AlarmsController();
 
     private AlarmsController() {
@@ -32,21 +39,13 @@ public class AlarmsController extends Controller implements Runnable {
         
             System.out.println("Registered with the event manager.");
 
-            /* Now we create the humidity control status and message panel
-             ** We put this panel about 2/3s the way down the terminal, aligned to the left
-             ** of the terminal. The status indicators are placed directly under this panel
-             */
             float winPosX = 0.0f; 	//This is the X position of the message window in terms 
             //of a percentage of the screen height
             float winPosY = 0.60f;	//This is the Y position of the message window in terms 
             //of a percentage of the screen height 
 
-            MessageWindow messageWin = new MessageWindow("Humidity Controller Status Console", winPosX, winPosY);
-
-            // Now we put the indicators directly under the humitity status and control panel
-            Indicator humIndicator = new Indicator("Humid OFF", messageWin.getX(), messageWin.getY() + messageWin.height());
-            Indicator dehumIndicator = new Indicator("DeHumid OFF", messageWin.getX() + (humIndicator.width() * 2), messageWin.getY() + messageWin.height());
-
+            MessageWindow messageWin = new MessageWindow("Security Controller Status Console", winPosX, winPosY);
+    
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
@@ -70,44 +69,22 @@ public class AlarmsController extends Controller implements Runnable {
                     messageWin.writeMessage("Error getting event queue::" + e);
                 }
 
-                // If there are messages in the queue, we read through them.
-                // We are looking for EventIDs = 4, this is a request to turn the
-                // humidifier or dehumidifier on/off. Note that we get all the messages
-                // at once... there is a 2.5 second delay between samples,.. so
-                // the assumption is that there should only be a message at most.
-                // If there are more, it is the last message that will effect the
-                // output of the humidity as it would in reality.
-
-                if (evtMgrI.getEventId() == HUMIDITY_CONTROLLER) {
+                if (evtMgrI.getEventId() == FIRE_CONTROLLER) {
                     if (evtMgrI.getMessage().equalsIgnoreCase(HUMIDIFIER_ON)) { // humidifier on
-                        humidifierState = true;
+                        fireState = 1;
                         messageWin.writeMessage("Received humidifier on event");
 
                         // Confirm that the message was recieved and acted on
                         confirmMessage(evtMgrI, HUMIDITY_SENSOR, HUMIDIFIER_ON);
                     }
                     if (evtMgrI.getMessage().equalsIgnoreCase(HUMIDIFIER_OFF)) { // humidifier off
-                        humidifierState = false;
+                        fireState = 0;
                         messageWin.writeMessage("Received humidifier off event");
 
                         // Confirm that the message was recieved and acted on
                         confirmMessage(evtMgrI, HUMIDITY_SENSOR, HUMIDIFIER_OFF);
                     }
-                    if (evtMgrI.getMessage().equalsIgnoreCase(DEHUMIDIFIER_ON)) { // dehumidifier on
-                        dehumidifierState = true;
-                        messageWin.writeMessage("Received dehumidifier on event");
-
-                        // Confirm that the message was recieved and acted on
-                        confirmMessage(evtMgrI, HUMIDITY_SENSOR, DEHUMIDIFIER_ON);
-                    }
-
-                    if (evtMgrI.getMessage().equalsIgnoreCase(DEHUMIDIFIER_OFF)) { // dehumidifier off
-                        dehumidifierState = false;
-                        messageWin.writeMessage("Received dehumidifier off event");
-
-                        // Confirm that the message was recieved and acted on
-                        confirmMessage(evtMgrI, HUMIDITY_SENSOR, DEHUMIDIFIER_OFF);
-                    }
+                    
                 }
 
                 // If the event ID == 99 then this is a signal that the simulation
@@ -119,30 +96,10 @@ public class AlarmsController extends Controller implements Runnable {
                     
                     messageWin.writeMessage("\n\nSimulation Stopped. \n");
 
-                    // Get rid of the indicators. The message panel is left for the
-                    // user to exit so they can see the last message posted.
-                    humIndicator.dispose();
-                    dehumIndicator.dispose();
                 }
 
-                // Update the lamp status
-                if (humidifierState) {
-                    // Set to green, humidifier is on
-                    humIndicator.setLampColorAndMessage("HUMID ON", 1);
-                }
-                else {
-                    // Set to black, humidifier is off
-                    humIndicator.setLampColorAndMessage("HUMID OFF", 0);
-                }
 
-                if (dehumidifierState) {
-                    // Set to green, dehumidifier is on
-                    dehumIndicator.setLampColorAndMessage("DEHUMID ON", 1);
-                }
-                else {
-                    // Set to black, dehumidifier is off
-                    dehumIndicator.setLampColorAndMessage("DEHUMID OFF", 0);
-                }
+                
                 try {
                     Thread.sleep(delay);
                 }

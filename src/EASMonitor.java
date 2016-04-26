@@ -4,7 +4,8 @@ import event.Event;
 import event.RabbitMQInterface;
 import instrumentation.Indicator;
 import instrumentation.MessageWindow;
-
+import java.util.Timer;
+import java.util.TimerTask;
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -24,6 +25,7 @@ public class EASMonitor extends Thread {
     Indicator doorIndicator;				
     Indicator windowIndicator;				
     Indicator intruderIndicator;
+    Indicator fireIndicator;
 
     public EASMonitor() {
         // event manager is on the local system
@@ -60,11 +62,17 @@ public class EASMonitor extends Thread {
         String currentDoorStatus = "0";
         String currentWindowStatus = "0";
         String currentMotionStatus = "0";
+        String currentFireStatus = "0";
         int delay = 1000;			// The loop delay (1 second)
+        int delaySp = 15000;
         boolean isDone = false;			// Loop termination flag
-        boolean on = true;			// Used to turn on heaters, chillers, humidifiers, and dehumidifiers
-        boolean off = false;			// Used to turn off heaters, chillers, humidifiers, and dehumidifiers
-        
+        Timer t = new Timer();
+        TimerTask tt = new TimerTask() {
+            @Override
+            public void run() {
+                startSprinklers();
+            };
+        };
         if (em != null) {
             // Now we create the ECS status and message panel
             // Note that we set up two indicators that are initially yellow. This is
@@ -76,6 +84,7 @@ public class EASMonitor extends Thread {
             windowIndicator = new Indicator("WINDOW UNK", messageWin.getX() + messageWin.width(), 0, 0);
             doorIndicator = new Indicator("DOOR UNK", messageWin.getX() + messageWin.width(), 0, 0);
             intruderIndicator = new Indicator("INTRUDER UNK", messageWin.getX() + messageWin.width(), 0, 0);
+            fireIndicator = new Indicator("FIRE UNK", messageWin.getX() + messageWin.width(), 0, 0);
 
             messageWin.writeMessage("Registered with the event manager.");
 
@@ -93,14 +102,7 @@ public class EASMonitor extends Thread {
                     messageWin.writeMessage("Error getting event queue::" + e);
                 } // catch // catch
 
-                // If there are messages in the queue, we read through them.
-                // We are looking for EventIDs = 1 or 2. Event IDs of 1 are temperature
-                // readings from the temperature sensor; event IDs of 2 are humidity sensor
-                // readings. Note that we get all the messages at once... there is a 1
-                // second delay between samples,.. so the assumption is that there should
-                // only be a message at most. If there are more, it is the last message
-                // that will effect the status of the temperature and humidity controllers
-                // as it would in reality.
+              
                 int msg_numero = em.getEventId();
                 String msg_texto = em.getMessage();
 
@@ -124,12 +126,26 @@ public class EASMonitor extends Thread {
                     } // catch // catch
                 } // if
                
-                if (msg_numero == common.Component.MOTION) { // Humidity reading
+                if (msg_numero == common.Component.MOTION) { 
                     try {
                         currentMotionStatus = msg_texto;
                     } // try
                         catch (Exception e) {
                         messageWin.writeMessage("Error reading motion sensor status: " + e);
+                    } // catch // catch
+                } // if
+                
+                if (msg_numero == common.Component.FIRE) { // Humidity reading
+                    try {
+                        currentFireStatus = msg_texto;
+                        if ("1.0".equals(currentFireStatus)){
+                            //fuego, iniciar timer, mandar llamar rociadores
+                            messageWin.writeMessage("FUEGO PRENDER ROCIADORES");
+                            t.schedule(tt, delaySp);
+                        }
+                    } // try
+                        catch (Exception e) {
+                        messageWin.writeMessage("Error reading fire sensor status: " + e);
                     } // catch // catch
                 } // if
 
@@ -141,14 +157,14 @@ public class EASMonitor extends Thread {
                         
 
                     messageWin.writeMessage("\n\nSimulation Stopped. \n");
-                        // Get rid of the indicators. The message panel is left for the
-                        // user to exit so they can see the last message posted.
+
                     doorIndicator.dispose();
                     windowIndicator.dispose();
                     intruderIndicator.dispose();
                 } // if
                 
                 messageWin.writeMessage("Door:: " + currentDoorStatus + "  Window:: " + currentWindowStatus+" Motion detected:: "+currentMotionStatus);
+                messageWin.writeMessage("Fire:: " + currentFireStatus );
 
                 // This delay slows down the sample rate to Delay milliseconds
                 try {
@@ -210,5 +226,39 @@ public class EASMonitor extends Thread {
         }
     } // stop sensors
 
+    public void stopTimer(){
+        
+    }
+    
+    public void startSprinklers() {
+        messageWin.writeMessage("***START MESSAGE RECEIVED - STARTING SPRINKLERS***");
+        String message = "";
+        Event evt;
+        
+        evt = new Event(Component.STARTSPRINKLER);
+        message = evt.Event1(Component.STARTSPRINKLER,String.valueOf(Component.STARTSPRINKLER));
+        
+        try {
+            em.publishMsg(message, "monitor");
+        } // try
+        catch (Exception e) {
+            System.out.println("Error sending monitor control message:: " + e);
+        }
+    } // stop sensors
    
+    public void stopSprinklers() {
+        messageWin.writeMessage("***STOP MESSAGE RECEIVED - STOPPING SPRINKLERS***");
+        String message = "";
+        Event evt;
+        
+        evt = new Event(Component.STOPSPRINKLER);
+        message = evt.Event1(Component.STOPSPRINKLER,String.valueOf(Component.STOPSPRINKLER));
+        
+        try {
+            em.publishMsg(message, "monitor");
+        } // try
+        catch (Exception e) {
+            System.out.println("Error sending monitor control message:: " + e);
+        }
+    } // stop sensors
 } // ECSMonitor

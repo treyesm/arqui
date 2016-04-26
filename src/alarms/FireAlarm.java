@@ -5,22 +5,22 @@
  */
 package alarms;
 
-/**
- *
- * @author tania
- */
 import common.Component;
 import instrumentation.MessageWindow;
 import sensors.Sensor;
 
-public class BrokenDoor extends Sensor implements Runnable {
+/**
+ *
+ * @author tania
+ */
+public class FireAlarm extends Sensor implements Runnable {
 
-    private int doorState = 0;	// door state: 0 == close, 1 == open
+    private int fireState = 0;	// door state: 0 == close, 1 == open
     private boolean sensorState = true;
 
-    private static BrokenDoor INSTANCE = new BrokenDoor();
+    private static FireAlarm INSTANCE = new FireAlarm();
 
-    private BrokenDoor() {
+    private FireAlarm() {
     }
 
     @Override
@@ -36,7 +36,7 @@ public class BrokenDoor extends Sensor implements Runnable {
             float winPosY = 0.60f;	//This is the Y position of the message window in terms 
             //of a percentage of the screen height 
 
-            MessageWindow messageWin = new MessageWindow("Door Sensor", winPosX, winPosY);
+            MessageWindow messageWin = new MessageWindow("Fire Sensor", winPosX, winPosY);
             messageWin.writeMessage("Registered with the event manager.");
 
             try {
@@ -46,7 +46,7 @@ public class BrokenDoor extends Sensor implements Runnable {
                 messageWin.writeMessage("Error:: " + e);
             }
 
-            messageWin.writeMessage("\nDoor status::");
+            messageWin.writeMessage("\nFire status::");
 
             /**
              * ******************************************************************
@@ -65,15 +65,6 @@ public class BrokenDoor extends Sensor implements Runnable {
 
                 try {
 
-                    if (evtMgrI.getEventId() == START) {
-                        sensorState = true;
-                        messageWin.writeMessage("\n\nSimulation start. \n");
-                    }
-                    if (evtMgrI.getEventId() == STOP) {
-                        sensorState = false;
-                        messageWin.writeMessage("\n\nSimulation stop. \n");
-                    }
-
                     // If the event ID == 99 then this is a signal that the simulation
                     // is to end. At this point, the loop termination flag is set to
                     // true and this process unregisters from the event manager.
@@ -90,23 +81,23 @@ public class BrokenDoor extends Sensor implements Runnable {
                     Thread.sleep(delay);
 
                     if (sensorState == true) {
-                        if (doorState == 0) {
-                            messageWin.writeMessage("Current Door Status:: Close");
+                        if (fireState == 0) {
+                            messageWin.writeMessage("Current Museum Status:: ok");
                         } else {
-                            messageWin.writeMessage("Current Door Status:: OPEN");
+                            messageWin.writeMessage("Current Museum Status:: FIRE DETECTED!!!");
                         }
                         float semilla = getRandomNumber();
 
-                        if (semilla > 0.2) {
-                            doorState = 0;
+                        if (semilla > 0.5) {
+                            fireState = 0;
                         } else {
-                            doorState = 1;
+                            fireState = 1;
                         }
-                        if (doorState == 1) {
-                            messageWin.writeMessage("Door opend, send alarm");
+                        if (fireState == 1) {
+                            messageWin.writeMessage("Fire, send alarm");
                         }
 
-                        postEvent(evtMgrI, DOOR, doorState);
+                        postEvent(evtMgrI, FIRE, fireState);
                     }
                 } catch (Exception e) {
                     messageWin.writeMessage("Sleep error:: " + e);
@@ -120,9 +111,9 @@ public class BrokenDoor extends Sensor implements Runnable {
 
     private static void createInstance() {
         if (INSTANCE == null) {
-            synchronized (BrokenDoor.class) {
+            synchronized (FireAlarm.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = new BrokenDoor();
+                    INSTANCE = new FireAlarm();
                 }
             }
         }
@@ -134,7 +125,7 @@ public class BrokenDoor extends Sensor implements Runnable {
      *
      * @return The instance of this class.
      */
-    public static BrokenDoor getInstance() {
+    public static FireAlarm getInstance() {
         if (INSTANCE == null) {
             createInstance();
         }
@@ -149,8 +140,9 @@ public class BrokenDoor extends Sensor implements Runnable {
      */
     public static void main(String args[]) {
         Component.SERVER_IP = "localhost";
-        BrokenDoor sensor = BrokenDoor.getInstance();
+        FireAlarm sensor = FireAlarm.getInstance();
         sensor.run();
     }
 
 }
+

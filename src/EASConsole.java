@@ -59,30 +59,36 @@ public class EASConsole {
                 System.out.println("Select an Option: \n");
                 System.out.println("X: Stop Alarm sensors\n");
                 System.out.println("S: Start Alarm sensors\n");
+                System.out.println("W: Start sprinklers\n");
+                System.out.println("O: Stop sprinklers\n");
                 System.out.print("\n>>>> ");
                 option = userInput.keyboardReadString();
 
                 //////////// option X ////////////
                 if (option.equalsIgnoreCase("X")) {
-		// Here the user is done, so we set the Done flag and halt
-                    // the environmental control system. The monitor provides a method
-                    // to do this. Its important to have processes release their queues
-                    // with the event manager. If these queues are not released these
-                    // become dead queues and they collect events and will eventually
-                    // cause problems for the event manager.
 
-                    isDone = true;
-                    System.out.println("\nConsole Stopped... Exit monitor mindow to return to command prompt.");
+                    System.out.println("\nAlarm sensor stopped... Press S to start again");
                     monitor.stopSensors();
-                    option = userInput.keyboardReadString();
+                    
                 } // if
-                //////////// option X ////////////
+                //////////// option S ////////////
                 if (option.equalsIgnoreCase("S")) {
+
+                    System.out.println("\nAlarm sensor started... Press X to stop them again.");
                     monitor.startSensors();
-                    isDone = true;
-                    System.out.println("\nConsole Stopped... Exit monitor mindow to return to command prompt.");
-                    monitor.startSensors();
-                    option = userInput.keyboardReadString();
+                    
+                } // if
+                if (option.equalsIgnoreCase("W")) {
+
+                    System.out.println("\nSprinklers started... Press X to stop them again.");
+                    monitor.startSprinklers();
+                    
+                } // if
+                if (option.equalsIgnoreCase("O")) {
+
+                    System.out.println("\nSprinklers stopped... Press X to stop them again.");
+                    monitor.stopSprinklers();
+                    
                 } // if
             } // while
         }
