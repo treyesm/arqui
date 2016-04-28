@@ -1,14 +1,14 @@
 /**
  * **************************************************************************************
- * File:Sensor.java 
- * Course: Software Architecture 
+ * File:Sensor.java
+ * Course: Software Architecture
  * Project: Event Architectures
- * Institution: Autonomous University of Zacatecas 
+ * Institution: Autonomous University of Zacatecas
  * Date: November 2015
- * Developer: Ferman Ivan Tovar 
+ * Developer: Ferman Ivan Tovar
  * Reviewer: Perla Velasco Elizondo
  * **************************************************************************************
- * This class contains the necessary to build a sensor, in order to every 
+ * This class contains the necessary to build a sensor, in order to every
  * sensor extends from this.
  * **************************************************************************************
  */
@@ -17,6 +17,8 @@ package sensors;
 import common.Component;
 import event.Event;
 import event.RabbitMQInterface;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import java.util.Random;
 
@@ -26,13 +28,14 @@ public class Sensor extends Component {
     protected boolean isDone = false;			// Loop termination flag
     protected float driftValue;				// The amount of temperature gained or lost
 
-    
-    protected Sensor() {evtMgrI.suscribeMsg("queueMonitor", "monitor");}
+    protected Sensor() {
+        evtMgrI.suscribeMsg("queueMonitor", "monitor");
+    }
 
     /**
-     * This method provides the simulation with random floating point 
+     * This method provides the simulation with random floating point
      * temperature values between 0.1 and 0.9.
-     * 
+     *
      * @return A random number
      */
     protected float getRandomNumber() {
@@ -46,10 +49,9 @@ public class Sensor extends Component {
     } // GetRandomNumber
 
     /**
-     * This method provides a random true or
-     * false value used for determining the positiveness or negativeness of the
-     * drift value.
-     * 
+     * This method provides a random true or false value used for determining
+     * the positiveness or negativeness of the drift value.
+     *
      * @return A random boolean value
      */
     protected boolean coinToss() {
@@ -68,13 +70,16 @@ public class Sensor extends Component {
      */
     protected void postEvent(RabbitMQInterface ei, int eventId, float value) {
         // Create the event.
+        SimpleDateFormat TimeStampFormat2 = new SimpleDateFormat("hh:mm:ss");
+        Calendar TimeStamp = Calendar.getInstance();
+        String tiempo = TimeStampFormat2.format(TimeStamp.getTime());
+
         Event evt = new Event(eventId);
-        String msg=evt.Event1(eventId, String.valueOf(value));
+        String msg = evt.Event1(eventId, String.valueOf(value));
         // Send the event to the event manager.
         try {
-            ei.publishMsg(msg, "sensors");
-        }
-        catch (Exception e) {
+            ei.publishMsg(msg + "&" + tiempo, "sensors");
+        } catch (Exception e) {
             System.out.println("Error Posting Temperature:: " + e);
         }
     }

@@ -4,8 +4,6 @@ import event.Event;
 import event.RabbitMQInterface;
 import instrumentation.Indicator;
 import instrumentation.MessageWindow;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -28,22 +26,7 @@ public class EASMonitor extends Thread {
     Indicator intruderIndicator;
     Indicator fireIndicator;
     int fuego = 0;
-    Timer t = new Timer();
-    TimerTask tt = new TimerTask() {
-
-        @Override
-        public void run() {
-            if(fuego == 0) {
-                startSprinklers();
-                fuego = 1;
-            } else {
-                t.cancel();
-                t.purge();
-            }
-        }
-    ;
-
-    };
+    String[] arrSensores = new String[5]; 
 
     public EASMonitor() {
         // event manager is on the local system
@@ -80,6 +63,8 @@ public class EASMonitor extends Thread {
         String currentWindowStatus = "0";
         String currentMotionStatus = "0";
         String currentFireStatus = "0";
+        
+        
         int delay = 1000;			// The loop delay (1 second)
         int delaySp = 1500;
         boolean isDone = false;			// Loop termination flag
@@ -104,21 +89,27 @@ public class EASMonitor extends Thread {
              ** Here we start the main simulation loop
              * *******************************************************************
              */
+            
             while (!isDone) {
                 // Here we get our event queue from the event manager
+                
+                
                 try {
                     em.suscribeMsg("queueSensors", "sensors");
+                    messageWin.writeMessage(em.returnMessage());
                 } // try
                 catch (Exception e) {
                     messageWin.writeMessage("Error getting event queue::" + e);
                 } // catch // catch
-
+                
                 int msg_numero = em.getEventId();
                 String msg_texto = em.getMessage();
-
+                String hora = em.getTime();
+                
                 if (msg_numero == common.Component.DOOR) {
                     try {
                         currentDoorStatus = msg_texto;
+                        arrSensores[0] = hora;
                         if ("1.0".equals(currentDoorStatus)) {
                             doorIndicator.setLampColorAndMessage("DOOR OPENED!!!!", 3);
                         }
@@ -126,11 +117,12 @@ public class EASMonitor extends Thread {
                     catch (Exception e) {
                         messageWin.writeMessage("Error reading door status: " + msg_texto);
                     } // catch // catch
-                } // if
+                }
 
-                if (msg_numero == common.Component.WINDOW) { // Humidity reading
+                if (msg_numero == common.Component.WINDOW) { // window reading
                     try {
                         currentWindowStatus = msg_texto;
+                        arrSensores[1] = hora;
                         if ("1.0".equals(currentMotionStatus)) {
                             windowIndicator.setLampColorAndMessage("WINDOW OPENED!!!!", 3);
                         }
@@ -138,11 +130,12 @@ public class EASMonitor extends Thread {
                     catch (Exception e) {
                         messageWin.writeMessage("Error reading window status: " + e);
                     } // catch // catch
-                } // if
+                }
 
                 if (msg_numero == common.Component.MOTION) {
                     try {
                         currentMotionStatus = msg_texto;
+                        arrSensores[2] = hora;
                         if ("1.0".equals(currentMotionStatus)) {
                             windowIndicator.setLampColorAndMessage("MOTION DETECTED!!!!", 3);
                         }
@@ -150,26 +143,24 @@ public class EASMonitor extends Thread {
                     catch (Exception e) {
                         messageWin.writeMessage("Error reading motion sensor status: " + e);
                     } // catch // catch
-                } // if
+                } 
 
                 if (msg_numero == common.Component.FIRE) { // Humidity reading
                     try {
                         currentFireStatus = msg_texto;
-
+                        arrSensores[3] = hora;
                         if ("1.0".equals(currentFireStatus)) {
 
                             fireIndicator.setLampColorAndMessage("FIRE!!!!", 3);
                             messageWin.writeMessage("FUEGO PRENDER ROCIADORES");
-                            if(fuego == 0){
-                                t.schedule(tt, delaySp);
-      
-                            }
+                            startSprinklers();
+                            
                         }
                     } // try
                     catch (Exception e) {
                         messageWin.writeMessage("Error reading fire sensor status: " + e);
                     } // catch // catch
-                } // if
+                }
 
                 // If the event ID == 99 then this is a signal that the simulation
                 // is to end. At this point, the loop termination flag is set to
@@ -252,9 +243,7 @@ public class EASMonitor extends Thread {
         messageWin.writeMessage("***START MESSAGE RECEIVED - STARTING SPRINKLERS***");
         String message = "";
         Event evt;
-        fuego = 0;
-        t.cancel();
-        t.purge();
+
         evt = new Event(Component.STARTSPRINKLER);
         message = evt.Event1(Component.STARTSPRINKLER, String.valueOf(Component.STARTSPRINKLER));
 
@@ -281,4 +270,9 @@ public class EASMonitor extends Thread {
             System.out.println("Error sending monitor control message:: " + e);
         }
     } // stop sensors
+    
+    public String[] returnState(){
+
+        return arrSensores;
+    }
 } // ECSMonitor

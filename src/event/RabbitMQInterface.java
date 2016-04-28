@@ -32,13 +32,37 @@ import java.util.Calendar;
  */
 public class RabbitMQInterface {
 
-    private long participantId = -1;			// This processes ID
-    private static final String sending = "logs";
-    private static String message = "";
+    private static final String sending = "fanout";
+    Connection connection;  
     Channel channel;
-    String queueSensors;
-    String queueMonitor;
-    Connection connection;
+    private long participantId = -1;			// This processes ID
+    private static String message = "";
+    Calendar TimeStamp = Calendar.getInstance();
+    SimpleDateFormat TimeStampFormat = new SimpleDateFormat("yyyy MM dd::hh:mm:ss:SSS");
+    
+    public RabbitMQInterface() {
+
+        ConnectionFactory factory = new ConnectionFactory();
+
+        factory.setHost("localhost");
+
+        try {
+
+            try {
+
+                connection = factory.newConnection();
+                //channel = connection.createChannel();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+        
+      
+    }
     
     class ParticipantNotRegisteredException extends Exception {
 
@@ -52,29 +76,7 @@ public class RabbitMQInterface {
 
     } // Exception
 
-    public RabbitMQInterface() {
-
-        ConnectionFactory factory = new ConnectionFactory();
-
-        factory.setHost("localhost");
-
-        try {
-
-            try {
-                connection = factory.newConnection();
-                channel = connection.createChannel();
-                queueSensors = channel.queueDeclare().getQueue();
-                queueMonitor = channel.queueDeclare().getQueue();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
-      
-    }
+    
     
     /**
      * This method allows participants to get their participant Id.
@@ -102,8 +104,7 @@ public class RabbitMQInterface {
      */
     public String getRegistrationTime() throws RabbitMQInterface.ParticipantNotRegisteredException {
         
-        Calendar TimeStamp = Calendar.getInstance();
-        SimpleDateFormat TimeStampFormat = new SimpleDateFormat("yyyy MM dd::hh:mm:ss:SSS");
+        
 
         if (participantId != -1) {
             
@@ -120,14 +121,13 @@ public class RabbitMQInterface {
     } // getRegistrationTime
 
     //consumir mensajes
-    public void suscribeMsg(String queue, String severity) {
-        
+    public void suscribeMsg(String queue1, String severity) {
+            
         try {
-
-            channel.exchangeDeclare(sending, "direct");
-           
-            channel.queueBind(queue, sending, severity);
-           
+            channel = connection.createChannel();
+                
+            String queue = channel.queueDeclare().getQueue();
+            channel.queueBind(queue, sending, "");
 
             Consumer consumer = new DefaultConsumer(channel) {
                 @Override
@@ -139,10 +139,11 @@ public class RabbitMQInterface {
             };
             
             channel.basicConsume(queue, true, consumer);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            
+            
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
     }
     
@@ -152,17 +153,21 @@ public class RabbitMQInterface {
     }
     
     //publicar mensajes
-    public void publishMsg(String message, String severity) {
-
+    public void publishMsg(String message, String queue1) throws Exception {  
         try {
             
-            channel.exchangeDeclare(sending, "direct");
-            channel.basicPublish(sending, severity, null, message.getBytes("UTF-8"));
+            
+            channel = connection.createChannel();
+            
+            channel.exchangeDeclare(sending, "fanout");
+            
+            
+            channel.basicPublish(sending, "", null, message.getBytes("UTF-8"));
             System.out.println(" [x] Sent '" + message + "'");
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            } catch (Throwable ex) {}
+        
+   
     }
     
     /**
@@ -172,7 +177,7 @@ public class RabbitMQInterface {
      */
     public int getEventId() {
         String []values = this.message.split("&");
-       if (values.length == 2)
+       if (values.length >= 3)
            
            try {
                return Integer.parseInt(values[1]);
@@ -192,10 +197,19 @@ public class RabbitMQInterface {
     public String getMessage() {
        String []values = this.message.split("&");
         
-       if (values.length == 2)
+       if (values.length >= 3)
           return values[0];
         
         return "";
     } // getMenssage
+    
+    public String getTime() {
+       String []values = this.message.split("&");
+        
+       if (values.length >= 3)
+          return values[2];
+        
+        return "";
+    } // getTime
     
 }

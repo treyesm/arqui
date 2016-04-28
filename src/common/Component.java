@@ -17,6 +17,10 @@ package common;
 import event.Event;
 import event.EventQueue;
 import event.RabbitMQInterface;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 public class Component {
 
@@ -112,4 +116,6 @@ public class Component {
     public Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
+    
+   
 }
